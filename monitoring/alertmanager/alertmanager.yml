@@ -1,0 +1,77 @@
+global:
+  resolve_timeout: 5m
+
+# -------------------------------------------------------
+# Default route
+# -------------------------------------------------------
+route:
+  receiver: slack-infra
+  group_by: [alertname, team]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+
+  routes:
+    - match:
+        team: ml
+      receiver: slack-fraud
+      group_by: [alertname]
+      group_wait: 10s
+      repeat_interval: 30m
+
+    - match:
+        team: infra
+      receiver: slack-infra
+      group_by: [alertname, job]
+      group_wait: 30s
+      repeat_interval: 1h
+
+# -------------------------------------------------------
+# Inhibition rules
+# -------------------------------------------------------
+inhibit_rules:
+  - source_match:
+      alertname: MinIOUnhealthy
+    target_match:
+      alertname: MLInferenceStalled
+    equal: []
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: [team]
+
+# -------------------------------------------------------
+# Receivers
+# To enable Slack: set SLACK_WEBHOOK in .env and run:
+#   docker compose up -d alertmanager
+# The entrypoint script will inject the URL automatically.
+# -------------------------------------------------------
+receivers:
+
+  - name: slack-fraud
+    slack_configs:
+      - api_url: "SLACK_WEBHOOK_PLACEHOLDER"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ if eq .Status "firing" }}🚨 ALERT{{ else }}✅ RESOLVED{{ end }} [{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Detail:* {{ .Annotations.description }}
+          {{ if .Annotations.dashboard }}*Dashboard:* {{ .Annotations.dashboard }}{{ end }}
+          {{ end }}
+        footer: "Fraud Detection Pipeline"
+
+  - name: slack-infra
+    slack_configs:
+      - api_url: "SLACK_WEBHOOK_PLACEHOLDER"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
+        title: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}🔴{{ else }}🟡{{ end }}{{ else }}✅{{ end }} [{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Detail:* {{ .Annotations.description }}
+          {{ end }}
+        footer: "Fraud Detection Pipeline"

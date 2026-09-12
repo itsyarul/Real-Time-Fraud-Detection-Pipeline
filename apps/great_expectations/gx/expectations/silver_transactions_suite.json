@@ -1,0 +1,348 @@
+{
+  "expectations": [
+    {
+      "id": "621b4840-aadc-40c9-b380-bf6b2bdea20d",
+      "kwargs": {
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "id": "9136658e-698c-49b3-af0c-e1c9f3e3dd41",
+      "kwargs": {
+        "column": "event_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dab20c04-71a6-4257-acc7-1ac3fae8485b",
+      "kwargs": {
+        "column": "event_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_unique"
+    },
+    {
+      "id": "6ac05fbf-8893-4070-ac81-7290fa5f4772",
+      "kwargs": {
+        "column": "source_row_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "790012ae-c6dc-45df-a02d-ad6e99aa913a",
+      "kwargs": {
+        "column": "Time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "296cacdd-9e4a-4c9e-a97c-02a7035e1467",
+      "kwargs": {
+        "column": "Amount"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dcdb62f4-97e3-4ee4-9b71-60e4a7a9ba75",
+      "kwargs": {
+        "column": "Class"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "a35df37f-ffe9-4a8f-8d5e-9553ccb938ad",
+      "kwargs": {
+        "column": "Amount",
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "685a141e-deff-412f-b3bf-0957f90318f4",
+      "kwargs": {
+        "column": "Class",
+        "value_set": [
+          0,
+          1
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "7f5f9128-09f5-42a7-a0c3-0dda93b0f5d9",
+      "kwargs": {
+        "column": "V1"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "30a27da5-c550-4d3b-bffd-ab8e2d1e9115",
+      "kwargs": {
+        "column": "V2"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "a900aae4-4d8d-4ad6-af69-9b58e48b0c37",
+      "kwargs": {
+        "column": "V3"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "93cfc76e-ab4d-453a-a5be-4806497ee536",
+      "kwargs": {
+        "column": "V4"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "55f5e1a5-1bd7-445e-b2d5-d01b941687c8",
+      "kwargs": {
+        "column": "V5"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c3df7354-9f59-49e9-8b72-cd8e1703e9e3",
+      "kwargs": {
+        "column": "V6"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "570c0ac5-e147-4811-bc95-50e6ee849c24",
+      "kwargs": {
+        "column": "V7"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "ffab72b2-7a4a-4ecf-9ced-f6dfdde11a72",
+      "kwargs": {
+        "column": "V8"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2d2c9cbd-a095-48c9-969a-ecd552de20cf",
+      "kwargs": {
+        "column": "V9"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "efc47352-4702-41e5-8252-9e2bc62f5434",
+      "kwargs": {
+        "column": "V10"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "ba8f668b-5e1f-4de4-ac82-f41796d716d3",
+      "kwargs": {
+        "column": "V11"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "027b951a-275b-4663-93bf-982fa5e26f24",
+      "kwargs": {
+        "column": "V12"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8085fa9e-466a-4037-a852-c4e066da53a5",
+      "kwargs": {
+        "column": "V13"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d7f74f2b-1e71-4ea1-a517-3f9cc03632a7",
+      "kwargs": {
+        "column": "V14"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5737a7d1-7642-4256-8315-2f88963aa2fa",
+      "kwargs": {
+        "column": "V15"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "65a64ca4-f260-4550-9653-83690c2b0681",
+      "kwargs": {
+        "column": "V16"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "61ad57ed-bec3-4915-95aa-2210303e8cfb",
+      "kwargs": {
+        "column": "V17"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8a550f81-a5f6-43c9-a2ce-a46b0f4663cf",
+      "kwargs": {
+        "column": "V18"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7ad25c4d-d624-4996-8db4-e09b76850026",
+      "kwargs": {
+        "column": "V19"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c975dc45-bc98-4581-acd3-a02c6214bfc9",
+      "kwargs": {
+        "column": "V20"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "00a54c27-40f8-4654-bf46-6fed0c54f7f8",
+      "kwargs": {
+        "column": "V21"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "3fe04ae1-b6ee-476d-905c-b151348cbdb8",
+      "kwargs": {
+        "column": "V22"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c94ac239-e499-4cc0-a4b2-64615cbbf0b0",
+      "kwargs": {
+        "column": "V23"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2ce5d58a-9485-4543-8412-b52095b130d8",
+      "kwargs": {
+        "column": "V24"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "06ec43c6-6b6e-49c9-bf98-63f233476dee",
+      "kwargs": {
+        "column": "V25"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "cf98cc4b-abca-4531-81c6-4e6718da524c",
+      "kwargs": {
+        "column": "V26"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "bc9cc6e9-3e93-4433-b8b2-4455281c4e1a",
+      "kwargs": {
+        "column": "V27"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "06c5a369-dc14-452c-83fa-6a35da2b0c32",
+      "kwargs": {
+        "column": "V28"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "5909804f-59d2-4d4b-8a34-d1c9cf3ca6a6",
+  "meta": {
+    "great_expectations_version": "1.19.1"
+  },
+  "name": "silver_transactions_suite",
+  "notes": null
+}

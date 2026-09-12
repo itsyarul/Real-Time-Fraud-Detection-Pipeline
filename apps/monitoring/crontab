@@ -1,0 +1,2 @@
+# Run push_metrics.py every 60 seconds
+* * * * * python /app/push_metrics.py

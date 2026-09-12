@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "c5fae4f2-a32d-4115-adb8-a79560f5268d",
+      "name": "silver_transactions"
+    },
+    "batch_definition": {
+      "id": "b05b343f-ce5a-4b38-9d24-81ba4359ee08",
+      "name": "whole_silver_dataframe"
+    },
+    "datasource": {
+      "id": "16278899-814b-40da-aaf6-53069d4f2677",
+      "name": "silver_spark_datasource"
+    }
+  },
+  "id": "11adfc0d-1a49-402c-b56f-cef5f41df3d4",
+  "name": "silver_transactions_validation",
+  "suite": {
+    "id": "5909804f-59d2-4d4b-8a34-d1c9cf3ca6a6",
+    "name": "silver_transactions_suite"
+  }
+}

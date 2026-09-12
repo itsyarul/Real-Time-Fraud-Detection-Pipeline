@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: fraud-detection-pipeline
+
+# -------------------------------------------------------
+# Alertmanager connection
+# -------------------------------------------------------
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# -------------------------------------------------------
+# Alert rules
+# -------------------------------------------------------
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+# -------------------------------------------------------
+# Scrape jobs
+# -------------------------------------------------------
+scrape_configs:
+
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+
+  # Docker container metrics (cAdvisor)
+  - job_name: cadvisor
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - cadvisor:8080
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: cadvisor
+
+  # Host OS metrics (Node Exporter)
+  - job_name: node-exporter
+    static_configs:
+      - targets:
+          - node-exporter:9100
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: docker-host
+
+  # Kafka broker / topic metrics
+  - job_name: kafka-exporter
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - kafka-exporter:9308
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: kafka
+
+  # ML Inference metrics pushed by the cron metrics pusher
+  - job_name: pushgateway
+    scrape_interval: 30s
+    honor_labels: true
+    static_configs:
+      - targets:
+          - pushgateway:9091
+
+  # MinIO native Prometheus endpoint
+  - job_name: minio
+    scrape_interval: 30s
+    metrics_path: /minio/metrics/cluster
+    static_configs:
+      - targets:
+          - minio:9000
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: minio

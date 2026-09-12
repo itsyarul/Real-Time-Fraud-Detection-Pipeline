@@ -1,0 +1,134 @@
+groups:
+
+  # ======================================================
+  # Fraud Detection — ML Inference
+  # ======================================================
+  - name: fraud_detection
+    rules:
+
+      # Fraud rate exceeds 5% sustained for 2 minutes
+      - alert: FraudRateHigh
+        expr: fraud_detection_fraud_rate > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: ml
+        annotations:
+          summary: "High fraud rate detected"
+          description: "Fraud rate is {{ $value | humanizePercentage }} over the last 2 minutes (threshold: 5%). Immediate investigation required."
+          dashboard: "http://grafana:3000/d/fraud-overview"
+
+      # No new batch written to monitoring table in 5 minutes — inference job stalled
+      - alert: MLInferenceStalled
+        expr: (fraud_detection_last_batch_timestamp_seconds > 0) and ((time() - fraud_detection_last_batch_timestamp_seconds) > 300)
+        for: 1m
+        labels:
+          severity: critical
+          team: ml
+        annotations:
+          summary: "ML inference pipeline has stalled"
+          description: "No inference batch has been processed for more than 5 minutes. Check the Spark streaming job."
+          dashboard: "http://grafana:3000/d/fraud-overview"
+
+      # Avg fraud probability jumped (possible concept drift / data issue)
+      - alert: FraudProbabilitySpike
+        expr: fraud_detection_avg_fraud_probability > 0.8
+        for: 3m
+        labels:
+          severity: warning
+          team: ml
+        annotations:
+          summary: "Average fraud probability is unusually high"
+          description: "Average fraud probability is {{ $value | humanize }}, which may indicate model drift or a data quality issue."
+
+  # ======================================================
+  # Kafka
+  # ======================================================
+  - name: kafka
+    rules:
+
+      # Consumer group lag too high for sustained period
+      - alert: KafkaConsumerLagHigh
+        expr: sum(kafka_consumergroup_lag) by (consumergroup, topic) > 10000
+        for: 3m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "Consumer group {{ $labels.consumergroup }} on topic {{ $labels.topic }} has a lag of {{ $value | humanize }} messages."
+
+      # Topic has no incoming messages for 5 minutes (producer down?)
+      - alert: KafkaNoMessagesIncoming
+        expr: rate(kafka_topic_partition_current_offset[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "No messages flowing into Kafka topic"
+          description: "Topic {{ $labels.topic }} has received no new messages in the last 5 minutes. The transaction producer may be down."
+
+  # ======================================================
+  # Infrastructure — Containers
+  # ======================================================
+  - name: infrastructure
+    rules:
+
+      # Container memory usage above 90%
+      - alert: ContainerHighMemory
+        expr: >
+          (container_memory_usage_bytes{name!=""} /
+           container_spec_memory_limit_bytes{name!=""}
+          ) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Container {{ $labels.name }} memory usage is above 90%"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit."
+
+      # Container CPU throttling
+      - alert: ContainerCPUThrottling
+        expr: >
+          rate(container_cpu_throttled_seconds_total{name!=""}[5m]) > 0.25
+        for: 5m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Container {{ $labels.name }} is CPU throttled"
+          description: "Container {{ $labels.name }} is being CPU throttled more than 25% of the time."
+
+  # ======================================================
+  # MinIO
+  # ======================================================
+  - name: minio
+    rules:
+
+      - alert: MinIOUnhealthy
+        expr: up{job="minio"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "MinIO is unreachable"
+          description: "Prometheus cannot scrape MinIO metrics endpoint. Storage layer may be down, halting all Spark Delta reads and writes."
+
+  # ======================================================
+  # Prometheus self
+  # ======================================================
+  - name: prometheus_self
+    rules:
+
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Prometheus scrape target is down"
+          description: "Target {{ $labels.job }} ({{ $labels.instance }}) has been unreachable for more than 2 minutes."

@@ -1,0 +1,9 @@
+boto3==1.39.0
+python-dotenv==1.1.1
+confluent-kafka==2.11.1
+delta-spark==4.0.1
+great_expectations==1.19.1
+scikit-learn
+joblib
+numpy
+pandas
