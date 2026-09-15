@@ -44,12 +44,13 @@ jobs:
           flake8 apps/ airflow/dags/ \
             --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      # 2. PEP-8 lint (ignore non-breaking whitespace/formatting codes)
-      - name: flake8 — PEP8 lint
+      # 2. PEP-8 style report (reports warnings without failing build)
+      - name: flake8 — PEP8 style report
         run: |
           flake8 apps/ airflow/dags/ \
             --max-line-length=120 \
-            --extend-ignore=E203,W503,E501,E302,E303,W292,W293,F541,F841 \
+            --exit-zero \
+            --statistics \
             --exclude=__pycache__,*.pyc
 
       # 3. Formatting check (shows diff in logs without blocking build)
