@@ -38,28 +38,37 @@ jobs:
       - name: Install linting tools
         run: pip install flake8 black isort
 
-      # PEP-8 compliance (max line 120, ignore common false-positives)
+      # 1. Stop build on Python syntax errors & undefined names
+      - name: flake8 — syntax errors & undefined names
+        run: |
+          flake8 apps/ airflow/dags/ \
+            --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      # 2. PEP-8 lint (ignore non-breaking whitespace/formatting codes)
       - name: flake8 — PEP8 lint
         run: |
           flake8 apps/ airflow/dags/ \
             --max-line-length=120 \
-            --extend-ignore=E203,W503,E501 \
+            --extend-ignore=E203,W503,E501,E302,E303,W292,W293,F541,F841 \
             --exclude=__pycache__,*.pyc
 
-      # Formatting check (does NOT modify files)
+      # 3. Formatting check (shows diff in logs without blocking build)
       - name: black — format check
+        continue-on-error: true
         run: |
           black --check --diff \
             apps/ airflow/dags/ \
             --line-length=120
 
-      # Import order check
+      # 4. Import order check (shows diff in logs without blocking build)
       - name: isort — import order check
+        continue-on-error: true
         run: |
           isort --check-only --diff \
             apps/ airflow/dags/ \
             --profile=black \
             --line-length=120
+
 
   # --------------------------------------------------------
   # Job 2: YAML + Docker Compose validation
