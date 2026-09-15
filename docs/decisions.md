@@ -1,4 +1,4 @@
-# 📋 Architecture Decision Records (ADRs)
+# Architecture Decision Records (ADRs)
 
 This document records the architectural and technology decisions made in the **Real-Time Fraud Detection Platform**, explaining the rationale, alternatives considered, and trade-offs.
 

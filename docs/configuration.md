@@ -1,4 +1,4 @@
-# ⚙️ Configuration Reference
+# Configuration Reference
 
 All platform services are configured via environment variables defined in `.env`. A complete, sanitized template is provided in `.env.example`.
 

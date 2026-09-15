@@ -1,10 +1,10 @@
-# 🚀 CI/CD & Automated Workflows
+# CI/CD & Automated Workflows
 
 This document clarifies the architecture separating **Software CI/CD** (GitHub Actions) from **Data & ML Continuous Training / Continuous Deployment (CT/CD)** (Apache Airflow).
 
 ---
 
-## 🏛️ Architectural Distinction
+## Architectural Distinction
 
 ```
                         Code Changes (PR / Commit)

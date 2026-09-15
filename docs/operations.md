@@ -1,4 +1,4 @@
-# 🛠️ Operations Runbook
+# Operations Runbook
 
 This guide contains step-by-step operational instructions for starting, managing, inspecting, and troubleshooting the platform in local or staging environments.
 

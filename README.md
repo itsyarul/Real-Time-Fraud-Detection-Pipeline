@@ -1,4 +1,4 @@
-# 🛡️ Real-Time Fraud Detection Platform
+# Real-Time Fraud Detection Platform
 
 [![CI — Lint & Static Analysis](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/ci.yml)
 [![Tests — Unit Tests](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/test.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/test.yml)
@@ -9,7 +9,7 @@ This is a real-time fraud detection platform that ingests transactions through K
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 1. [Project Overview](#1-project-overview)
 2. [Problem Statement](#2-problem-statement)
 3. [Architecture](#3-architecture)
@@ -316,7 +316,7 @@ docker compose run --rm spark-submit \
 
 ## 11. How to Verify
 
-### 🌐 Web Interfaces & Dashboards
+### Web Interfaces & Dashboards
 
 | Component | Web UI URL | Default Credentials | Description |
 |---|---|---|---|
@@ -329,7 +329,7 @@ docker compose run --rm spark-submit \
 | **Prometheus** | [http://localhost:9090](http://localhost:9090) | *None* | Query raw time-series metrics and alert rule statuses |
 | **Alertmanager** | [http://localhost:9093](http://localhost:9093) | *None* | Check active alert notifications and silencing rules |
 
-### 💻 Command-Line Verification
+### Command-Line Verification
 
 ```bash
 # 1. Inspect Bronze table row count and sample records
@@ -517,7 +517,7 @@ The platform was benchmarked using the Kaggle Credit Card Fraud dataset:
 
 ---
 
-## 👥 Authors & License
+## Authors & License
 
 - **Author**: Yarul ([@itsyarul](https://github.com/itsyarul))
 - **Project**: Real-Time Fraud Detection Pipeline

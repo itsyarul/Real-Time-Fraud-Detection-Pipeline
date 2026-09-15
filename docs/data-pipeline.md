@@ -1,4 +1,4 @@
-# 🌊 Data Pipeline & Medallion Lakehouse
+# Data Pipeline & Medallion Lakehouse
 
 This document details the transaction lifecycle, streaming ingestion, Delta Lake medallion storage layers, validation quarantine logic, and idempotency guarantees implemented across the platform.
 
@@ -6,7 +6,7 @@ This document details the transaction lifecycle, streaming ingestion, Delta Lake
 
 ---
 
-## 🔁 Complete Transaction Lifecycle
+## Complete Transaction Lifecycle
 
 ```
 creditcard.csv (Kaggle Dataset)
@@ -74,7 +74,7 @@ MinIO Quarantine (s3a://quarantine/transactions)  MinIO Silver (s3a://silver/tra
 
 ![MinIO Buckets](Minio%20buckets.png)
 
-### 🥉 Bronze Layer (`s3a://bronze/transactions`)
+### Bronze Layer (`s3a://bronze/transactions`)
 - **Role**: Raw, immutable event store. Preserves the exact payload received from Kafka along with ingestion metadata.
 - **Job**: `apps/spark/jobs/kafka_to_bronze.py`
 - **Schema**:
@@ -82,7 +82,7 @@ MinIO Quarantine (s3a://quarantine/transactions)  MinIO Silver (s3a://silver/tra
   - Metadata column added: `ingestion_timestamp = current_timestamp()`.
 - **Write Mode**: Append-only Delta table with Spark streaming checkpointing at `s3a://spark-checkpoints/kafka-to-bronze`.
 
-### 🥈 Silver Layer (`s3a://silver/transactions`)
+### Silver Layer (`s3a://silver/transactions`)
 - **Role**: Cleaned, typed, deduplicated, and validated transactions ready for ML training and live scoring.
 - **Job**: `apps/spark/jobs/bronze_to_silver.py`
 - **Transformations**:
@@ -92,14 +92,14 @@ MinIO Quarantine (s3a://quarantine/transactions)  MinIO Silver (s3a://silver/tra
   4. Filters valid records into Silver and diverts corrupt records into Quarantine.
   5. Performs atomic Delta `MERGE` on `event_id` to guarantee zero duplicate records even if Kafka or Spark restarts mid-batch.
 
-### 🚫 Quarantine Layer (`s3a://quarantine/transactions`)
+### Quarantine Layer (`s3a://quarantine/transactions`)
 - **Role**: Dead-letter store for corrupt, unparseable, or schema-violating events.
 - **Job**: `apps/spark/jobs/bronze_to_silver.py`
 - **Error Flagging**:
   - Each invalid record is appended with an `error_reasons` array (e.g., `["NULL_EVENT_ID"]`, `["NEGATIVE_AMOUNT"]`, `["NULL_TIME"]`).
   - Quarantine events can be inspected via `apps/spark/jobs/read_quarantine.py` for root-cause analysis without breaking downstream consumers.
 
-### 🥇 Gold Layer (`s3a://gold/fraud_metrics`)
+### Gold Layer (`s3a://gold/fraud_metrics`)
 - **Role**: Aggregated analytical tables and business metrics.
 - **Metrics**: Hourly transaction volume, running fraud rates, total fraudulent dollar amount, and high-risk account velocity patterns.
 

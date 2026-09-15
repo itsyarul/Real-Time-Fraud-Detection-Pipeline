@@ -1,4 +1,4 @@
-# 🧠 Machine Learning Lifecycle & CT/CD
+# Machine Learning Lifecycle & CT/CD
 
 This document details the machine learning dataset preparation, class imbalance handling, training pipeline, decision threshold optimization, evaluation metrics, and automated model promotion managed via Apache Airflow.
 

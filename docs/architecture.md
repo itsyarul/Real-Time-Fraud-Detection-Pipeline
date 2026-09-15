@@ -1,4 +1,4 @@
-# 🏛️ System Architecture
+# System Architecture
 
 ## Overview
 
@@ -8,7 +8,7 @@ The **Real-Time Fraud Detection Platform** is designed to process, inspect, vali
 
 ---
 
-## 🔄 End-to-End Data Lifecycle
+## End-to-End Data Lifecycle
 
 ```
                          Transaction Dataset (creditcard.csv)
@@ -51,7 +51,7 @@ Model Registry (MinIO)           ▼                           ▼
 
 ---
 
-## 🧩 Component Breakdown
+## Component Breakdown
 
 ### 1. Ingestion Layer: Apache Kafka & Producer
 - **Engine**: Apache Kafka 4.3.1 operating in **KRaft** (Kafka Raft Metadata) mode, eliminating ZooKeeper dependency.

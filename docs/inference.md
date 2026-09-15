@@ -1,10 +1,10 @@
-# ⚡ Real-Time ML Inference & Fraud Alerting
+# Real-Time ML Inference & Fraud Alerting
 
 This document describes how the platform executes sub-second machine learning inference on live streaming transactions, records prediction history, and dispatches real-time fraud alerts.
 
 ---
 
-## 🏗️ Real-Time Inference Architecture
+## Real-Time Inference Architecture
 
 ```
 MinIO Silver Delta (s3a://silver/transactions)
@@ -74,7 +74,7 @@ Whenever `fraud_prediction == 1`, the record is automatically filtered and appen
 - Dispatches high-priority webhooks to your team's Slack channel via `SLACK_WEBHOOK`:
 ```json
 {
-  "text": "🚨 *FRAUD ALERT DETECTED* 🚨\n• Event ID: `c1f7b88e-4a6c-4f79-88b1-38e9d6d5a1b2`\n• Amount: `$1,849.20`\n• Fraud Probability: `99.82%`\n• Model: `fraud-logistic-regression:production`"
+  "text": "*FRAUD ALERT DETECTED* \n• Event ID: `c1f7b88e-4a6c-4f79-88b1-38e9d6d5a1b2`\n• Amount: `$1,849.20`\n• Fraud Probability: `99.82%`\n• Model: `fraud-logistic-regression:production`"
 }
 ```
 

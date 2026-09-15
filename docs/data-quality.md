@@ -1,10 +1,10 @@
-# 🛡️ Data Quality & Great Expectations
+# Data Quality & Great Expectations
 
 This document explains the data quality framework implemented in the platform using **Great Expectations 1.19.1** and the Spark quarantine routing mechanism.
 
 ---
 
-## 🎯 Data Quality Philosophy
+## Data Quality Philosophy
 
 In financial fraud detection systems, dirty or malformed data has severe consequences:
 1. Missing features lead to skewed inference scores or runtime null-pointer exceptions.

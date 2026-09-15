@@ -1,4 +1,4 @@
-# 🔍 Troubleshooting Guide
+# Troubleshooting Guide
 
 This guide documents common issues encountered during local development, container startup, or streaming execution, along with diagnostic commands and resolutions.
 

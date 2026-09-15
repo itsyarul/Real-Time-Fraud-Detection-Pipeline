@@ -1,4 +1,4 @@
-# 📊 Observability & Monitoring
+# Observability & Monitoring
 
 This document details the monitoring stack, Prometheus metrics pipeline, Grafana dashboards, and Alertmanager configurations.
 
@@ -6,7 +6,7 @@ This document details the monitoring stack, Prometheus metrics pipeline, Grafana
 
 ---
 
-## 📈 Monitoring Architecture
+## Monitoring Architecture
 
 ```
 Spark Streaming / Inference Engine
