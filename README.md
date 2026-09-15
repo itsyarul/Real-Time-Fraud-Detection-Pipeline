@@ -1,5 +1,10 @@
 # 🛡️ Real-Time Fraud Detection Platform
 
+[![CI — Lint & Static Analysis](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/ci.yml)
+[![Tests — Unit Tests](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/test.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/test.yml)
+[![Docker — Build & Push](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/docker-build.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/docker-build.yml)
+[![Security — Dependency Scan](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/dependency-scan.yml/badge.svg)](https://github.com/itsyarul/Real-Time-Fraud-Detection-Pipeline/actions/workflows/dependency-scan.yml)
+
 This is a real-time fraud detection platform that ingests transactions through Kafka, processes them with Spark Structured Streaming, stores data in Delta Lake on MinIO, performs ML inference, generates fraud alerts, validates data using Great Expectations, orchestrates ML retraining through Airflow, and exposes operational/ML metrics through Prometheus and Grafana.
 
 ---
@@ -426,10 +431,10 @@ GitHub Actions                  Apache Airflow
 
 ### GitHub Actions Workflows (`.github/workflows/`)
 - `ci.yml`: Runs `flake8`, `black`, `isort`, `yamllint`, and validates `docker-compose.yml`.
-- `tests.yml`: Runs `pytest` unit tests with mocked S3/MinIO fixtures testing the Model Registry.
+- `test.yml`: Runs `pytest` unit tests with mocked S3/MinIO fixtures testing the Model Registry.
 - `docker-build.yml`: Builds Spark, Airflow, Producer, and Pusher container images and publishes them to GHCR.
 - `release.yml`: Automates GitHub Releases and Docker image version tags on Git semantic tags.
-- `security-scan.yml`: Conducts weekly automated container vulnerability scans via **Trivy** and dependency audits via **pip-audit**.
+- `dependency-scan.yml`: Conducts weekly automated container vulnerability scans via **Trivy** and dependency audits via **pip-audit**.
 
 > Detailed CI/CD documentation is available in [docs/cicd.md](docs/cicd.md).
 
