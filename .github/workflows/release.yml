@@ -1,0 +1,159 @@
+# ============================================================
+# Workflow 4: Release -- Versioned GitHub Release
+#
+# Triggers when a tag matching v*.*.* is pushed.
+#
+# What it does:
+#   1. Auto-generates GitHub Release notes from commit history
+#   2. Re-tags all 4 Docker images with the release version
+#   3. Uploads a deployment-manifest.json as a release asset
+#      (records exact image digests + versions used)
+#
+# Usage:
+#   git tag v1.0.0
+#   git push origin v1.0.0
+# ============================================================
+
+name: Release — Versioned GitHub Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+  packages: write   # needed to push versioned Docker tags
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # --------------------------------------------------------
+  # Job 1: Create GitHub Release with auto-generated notes
+  # --------------------------------------------------------
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.release.outputs.id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for release notes
+
+      - name: Create GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          body: |
+            ## Real-Time Fraud Detection Pipeline — ${{ github.ref_name }}
+
+            ### Docker Images
+
+            All images are published to GitHub Container Registry:
+
+            | Image | Tag |
+            |---|---|
+            | `ghcr.io/${{ github.repository_owner }}/fraud-spark` | `${{ github.ref_name }}` |
+            | `ghcr.io/${{ github.repository_owner }}/fraud-airflow` | `${{ github.ref_name }}` |
+            | `ghcr.io/${{ github.repository_owner }}/fraud-metrics-pusher` | `${{ github.ref_name }}` |
+            | `ghcr.io/${{ github.repository_owner }}/fraud-producer` | `${{ github.ref_name }}` |
+
+            ### Pull a specific image
+            ```bash
+            docker pull ghcr.io/${{ github.repository_owner }}/fraud-spark:${{ github.ref_name }}
+            ```
+
+  # --------------------------------------------------------
+  # Job 2: Tag existing Docker images with the release version
+  # --------------------------------------------------------
+  tag-docker-images:
+    name: Tag Docker images — ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    needs: github-release
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - fraud-spark
+          - fraud-airflow
+          - fraud-metrics-pusher
+          - fraud-producer
+
+    steps:
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pull the latest image built from main and re-tag it
+      # with the release version
+      - name: Pull latest and re-tag with ${{ github.ref_name }}
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}"
+          docker pull "${IMAGE}:latest"
+          docker tag  "${IMAGE}:latest" "${IMAGE}:${{ github.ref_name }}"
+          docker push "${IMAGE}:${{ github.ref_name }}"
+
+  # --------------------------------------------------------
+  # Job 3: Create and upload deployment manifest
+  # --------------------------------------------------------
+  deployment-manifest:
+    name: Upload deployment manifest
+    runs-on: ubuntu-latest
+    needs: [github-release, tag-docker-images]
+
+    steps:
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate deployment-manifest.json
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          VERSION="${{ github.ref_name }}"
+          REGISTRY="${{ env.REGISTRY }}"
+          COMMIT="${{ github.sha }}"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          cat > deployment-manifest.json << EOF
+          {
+            "release_version": "${VERSION}",
+            "commit_sha": "${COMMIT}",
+            "released_at": "${DATE}",
+            "registry": "${REGISTRY}",
+            "images": {
+              "fraud-spark":          "${REGISTRY}/${OWNER}/fraud-spark:${VERSION}",
+              "fraud-airflow":        "${REGISTRY}/${OWNER}/fraud-airflow:${VERSION}",
+              "fraud-metrics-pusher": "${REGISTRY}/${OWNER}/fraud-metrics-pusher:${VERSION}",
+              "fraud-producer":       "${REGISTRY}/${OWNER}/fraud-producer:${VERSION}"
+            },
+            "component_versions": {
+              "python":  "3.12",
+              "spark":   "4.0.1",
+              "kafka":   "4.3.1",
+              "airflow": "2.9.3",
+              "delta":   "4.0.1"
+            }
+          }
+          EOF
+
+          echo "Generated deployment manifest:"
+          cat deployment-manifest.json
+
+      - name: Upload deployment manifest to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: deployment-manifest.json

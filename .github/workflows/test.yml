@@ -1,0 +1,263 @@
+# ============================================================
+# Workflow 2: Tests -- Unit Tests (mocked S3/MinIO)
+#
+# Runs on every push and pull_request to main / develop.
+#
+# Scope:
+#   - apps/ml/common/model_registry.py  (unit tests via mock)
+#   - apps/quality/                      SKIPPED in CI
+#     (test_gx_failure.py requires a live Spark cluster +
+#      real MinIO data; it is an integration test meant to
+#      run inside the Docker Compose stack.)
+# ============================================================
+
+name: Tests — Unit Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: pytest — model registry (mocked S3)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pytest \
+            pytest-cov \
+            boto3 \
+            botocore \
+            joblib \
+            scikit-learn \
+            numpy \
+            pandas \
+            python-dotenv \
+            moto[s3]
+
+      # Write a proper pytest unit-test file that mocks S3/MinIO
+      # so the ModelRegistry can be tested without real infrastructure.
+      - name: Generate mocked unit tests
+        run: |
+          cat > /tmp/test_model_registry_unit.py << 'PYTEST_EOF'
+          """
+          Unit tests for ModelRegistry.
+          All S3 / boto3 calls are intercepted by moto so no
+          real MinIO instance is needed.
+          """
+          import json
+          import os
+          import sys
+          import tempfile
+          from pathlib import Path
+          from unittest.mock import patch, MagicMock
+
+          import boto3
+          import joblib
+          import numpy as np
+          import pytest
+          from sklearn.linear_model import LogisticRegression
+
+          # Make apps/ml importable
+          sys.path.insert(0, str(Path(__file__).parent))
+          ML_ROOT = Path("apps/ml")
+          sys.path.insert(0, str(ML_ROOT))
+
+          from common.model_registry import ModelRegistry, ModelRegistryError
+
+          # ----------------------------------------------------------------
+          # Helpers
+          # ----------------------------------------------------------------
+
+          def _make_metadata(
+              model_name="fraud-logistic-regression",
+              version="1.0.0",
+              threshold=0.99,
+          ):
+              features = [f"V{i}" for i in range(1, 29)] + ["Amount"]
+              return {
+                  "model_name": model_name,
+                  "model_version": version,
+                  "decision_threshold": threshold,
+                  "features": features,
+              }
+
+
+          def _make_model():
+              X = np.random.randn(100, 29)
+              y = (X[:, 0] > 0).astype(int)
+              clf = LogisticRegression()
+              clf.fit(X, y)
+              return clf
+
+
+          # ----------------------------------------------------------------
+          # Test: validate_metadata passes for correct metadata
+          # ----------------------------------------------------------------
+
+          def test_validate_metadata_passes():
+              registry = ModelRegistry(
+                  model_base_path="s3://models/fraud-detection",
+                  local_base_path="/tmp/model-registry-test",
+              )
+              metadata = _make_metadata()
+              # Should not raise
+              registry.validate_metadata(
+                  metadata=metadata,
+                  expected_model_name="fraud-logistic-regression",
+                  expected_version="1.0.0",
+                  expected_threshold=0.99,
+              )
+
+
+          # ----------------------------------------------------------------
+          # Test: validate_metadata raises on model name mismatch
+          # ----------------------------------------------------------------
+
+          def test_validate_metadata_wrong_name():
+              registry = ModelRegistry(
+                  model_base_path="s3://models/fraud-detection",
+                  local_base_path="/tmp/model-registry-test",
+              )
+              metadata = _make_metadata(model_name="other-model")
+              with pytest.raises(ModelRegistryError, match="Model name mismatch"):
+                  registry.validate_metadata(
+                      metadata=metadata,
+                      expected_model_name="fraud-logistic-regression",
+                      expected_version="1.0.0",
+                  )
+
+
+          # ----------------------------------------------------------------
+          # Test: validate_metadata raises on threshold mismatch
+          # ----------------------------------------------------------------
+
+          def test_validate_metadata_wrong_threshold():
+              registry = ModelRegistry(
+                  model_base_path="s3://models/fraud-detection",
+                  local_base_path="/tmp/model-registry-test",
+              )
+              metadata = _make_metadata(threshold=0.5)
+              with pytest.raises(ModelRegistryError, match="threshold mismatch"):
+                  registry.validate_metadata(
+                      metadata=metadata,
+                      expected_model_name="fraud-logistic-regression",
+                      expected_version="1.0.0",
+                      expected_threshold=0.99,
+                  )
+
+
+          # ----------------------------------------------------------------
+          # Test: validate_metadata skips version check for "production"
+          # ----------------------------------------------------------------
+
+          def test_validate_metadata_production_version_skipped():
+              registry = ModelRegistry(
+                  model_base_path="s3://models/fraud-detection",
+                  local_base_path="/tmp/model-registry-test",
+              )
+              metadata = _make_metadata(version="1.0.0")
+              # "production" as expected_version skips version check
+              registry.validate_metadata(
+                  metadata=metadata,
+                  expected_model_name="fraud-logistic-regression",
+                  expected_version="production",
+              )
+
+
+          # ----------------------------------------------------------------
+          # Test: get_model_uri builds correct URI
+          # ----------------------------------------------------------------
+
+          def test_get_model_uri():
+              registry = ModelRegistry(
+                  model_base_path="s3://models/fraud-detection",
+                  local_base_path="/tmp/model-registry-test",
+              )
+              uri = registry.get_model_uri("fraud-logistic-regression", "v1")
+              assert uri == "s3://models/fraud-detection/fraud-logistic-regression/v1"
+
+
+          # ----------------------------------------------------------------
+          # Test: load_model loads a real joblib file
+          # ----------------------------------------------------------------
+
+          def test_load_model_from_disk():
+              with tempfile.TemporaryDirectory() as tmpdir:
+                  artifact_dir = Path(tmpdir)
+                  model = _make_model()
+                  joblib.dump(model, artifact_dir / "model.joblib")
+
+                  registry = ModelRegistry(local_base_path=tmpdir)
+                  loaded = registry.load_model(artifact_dir)
+                  assert hasattr(loaded, "predict")
+
+
+          # ----------------------------------------------------------------
+          # Test: load_metadata reads JSON correctly
+          # ----------------------------------------------------------------
+
+          def test_load_metadata_from_disk():
+              with tempfile.TemporaryDirectory() as tmpdir:
+                  artifact_dir = Path(tmpdir)
+                  metadata = _make_metadata()
+                  (artifact_dir / "metadata.json").write_text(
+                      json.dumps(metadata), encoding="utf-8"
+                  )
+
+                  registry = ModelRegistry(local_base_path=tmpdir)
+                  loaded = registry.load_metadata(artifact_dir)
+                  assert loaded["model_name"] == "fraud-logistic-regression"
+
+
+          # ----------------------------------------------------------------
+          # Test: download_artifacts raises ModelRegistryError when S3 fails
+          # ----------------------------------------------------------------
+
+          def test_download_artifacts_raises_on_s3_error():
+              with patch("boto3.client") as mock_boto:
+                  mock_s3 = MagicMock()
+                  mock_s3.download_file.side_effect = Exception("Connection refused")
+                  mock_boto.return_value = mock_s3
+
+                  registry = ModelRegistry(
+                      model_base_path="s3://models/fraud-detection",
+                      local_base_path="/tmp/model-registry-test",
+                  )
+                  with pytest.raises(ModelRegistryError, match="Failed to download"):
+                      registry.download_artifacts("fraud-logistic-regression", "v1")
+          PYTEST_EOF
+
+      - name: Run unit tests
+        run: |
+          pytest /tmp/test_model_registry_unit.py \
+            -v \
+            --tb=short \
+            --cov=apps/ml/common \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14

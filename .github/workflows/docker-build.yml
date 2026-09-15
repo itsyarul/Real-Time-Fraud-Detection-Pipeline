@@ -1,0 +1,167 @@
+# ============================================================
+# Workflow 3: Docker Build & Push to ghcr.io
+#
+# Triggers:
+#   - Push to main (automatic)
+#   - Manual workflow_dispatch (on-demand)
+#
+# Images built and pushed to ghcr.io:
+#   1. fraud-spark        (apps/spark/Dockerfile)
+#   2. fraud-airflow      (airflow/Dockerfile)
+#   3. fraud-metrics-pusher (apps/monitoring/Dockerfile)
+#   4. fraud-producer     (apps/producer/Dockerfile)
+#
+# Authentication uses the built-in GITHUB_TOKEN -- no extra
+# secrets required.
+# ============================================================
+
+name: Docker — Build & Push to ghcr.io
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Image to build (spark | airflow | metrics-pusher | producer | all)"
+        required: false
+        default: all
+
+# Write permission is required to push packages to ghcr.io
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  PYTHON_VERSION: "3.12"
+  SPARK_VERSION: "4.0.1"
+  AIRFLOW_VERSION: "2.9.3"
+  SPARK_KAFKA_CONNECTOR_VERSION: "4.0.1"
+  DELTA_VERSION: "4.0.1"
+  HADOOP_AWS_VERSION: "3.4.1"
+  AWS_SDK_V2_VERSION: "2.24.6"
+
+jobs:
+  # --------------------------------------------------------
+  # Matrix strategy: build each image independently so a
+  # failure in one does not block the others.
+  # --------------------------------------------------------
+  build-and-push:
+    name: Build & Push — ${{ matrix.image.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          # ------ Spark streaming image ------
+          - name: fraud-spark
+            dockerfile: apps/spark/Dockerfile
+            context: .
+            build_args: |
+              SPARK_VERSION=4.0.1
+              SPARK_KAFKA_CONNECTOR_VERSION=4.0.1
+              DELTA_VERSION=4.0.1
+              HADOOP_AWS_VERSION=3.4.1
+              AWS_SDK_V2_VERSION=2.24.6
+            paths: |
+              apps/spark/**
+              configs/spark/**
+
+          # ------ Airflow orchestrator image ------
+          - name: fraud-airflow
+            dockerfile: airflow/Dockerfile
+            context: .
+            build_args: |
+              AIRFLOW_VERSION=2.9.3
+              PYTHON_VERSION=3.12
+            paths: |
+              airflow/**
+
+          # ------ Prometheus metrics pusher image ------
+          - name: fraud-metrics-pusher
+            dockerfile: apps/monitoring/Dockerfile
+            context: .
+            build_args: |
+              PYTHON_VERSION=3.12
+            paths: |
+              apps/monitoring/**
+
+          # ------ Kafka producer image ------
+          - name: fraud-producer
+            dockerfile: apps/producer/Dockerfile
+            context: .
+            build_args: |
+              PYTHON_VERSION=3.12
+            paths: |
+              apps/producer/**
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Only build if relevant files changed (skip for workflow_dispatch)
+      - name: Check changed paths
+        id: changed
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            changed:
+              - ${{ matrix.image.paths }}
+              - docker-compose.yml
+              - .github/workflows/docker-build.yml
+
+      # Enable Docker BuildKit for layer caching
+      - name: Set up Docker Buildx
+        if: steps.changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/setup-buildx-action@v3
+
+      # Authenticate with ghcr.io using the automatic GITHUB_TOKEN
+      - name: Log in to ghcr.io
+        if: steps.changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate OCI-standard image metadata (tags + labels)
+      - name: Extract Docker metadata
+        id: meta
+        if: steps.changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+            type=ref,event=branch
+
+      # Build and push with BuildKit layer cache
+      - name: Build and push ${{ matrix.image.name }}
+        if: steps.changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.image.build_args }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Image pushed summary
+        if: steps.changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "### Docker image pushed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image.name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,7 @@
 import os
 
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
 
 BRONZE_PATH = os.getenv(
@@ -36,8 +37,8 @@ def main():
     (
         df
         .orderBy(
-            "kafka_partition",
-            "kafka_offset",
+            col("ingested_at").desc(),
+            col("kafka_offset").desc(),
         )
         .select(
             "event_id",

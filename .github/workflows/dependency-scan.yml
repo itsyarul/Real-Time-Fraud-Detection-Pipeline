@@ -1,0 +1,131 @@
+# ============================================================
+# Workflow 5: Security Scan -- Trivy CVE + pip-audit
+#
+# Triggers:
+#   - Weekly on Monday at 07:00 UTC
+#   - Manual workflow_dispatch (on-demand)
+#
+# What it does:
+#   1. Trivy scans each Docker image for CRITICAL + HIGH CVEs
+#      and reports results in SARIF format to GitHub Security tab
+#   2. pip-audit scans all requirements.txt files for
+#      known Python package vulnerabilities
+# ============================================================
+
+name: Security — Dependency Scan
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"   # Every Monday at 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  security-events: write   # upload SARIF to Security tab
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # --------------------------------------------------------
+  # Job 1: Trivy image scan (per Docker image)
+  # --------------------------------------------------------
+  trivy-image-scan:
+    name: Trivy scan — ${{ matrix.image }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - fraud-spark
+          - fraud-airflow
+          - fraud-metrics-pusher
+          - fraud-producer
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Docker image
+        run: |
+          docker pull "${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:latest" || \
+          echo "Image not yet pushed — skipping scan for ${{ matrix.image }}"
+
+      # Run Trivy and upload SARIF to GitHub Security tab
+      - name: Trivy CVE scan — ${{ matrix.image }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:latest"
+          format: "sarif"
+          output: "trivy-${{ matrix.image }}.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"   # Do not fail the workflow; report only
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-${{ matrix.image }}.sarif"
+          category: "trivy-${{ matrix.image }}"
+
+      # Also produce a human-readable table report as artifact
+      - name: Trivy table report — ${{ matrix.image }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.image }}:latest"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+          ignore-unfixed: true
+
+  # --------------------------------------------------------
+  # Job 2: pip-audit — Python package vulnerability scan
+  # --------------------------------------------------------
+  pip-audit:
+    name: pip-audit — Python requirements
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      # Scan each requirements.txt independently so failures
+      # are reported per-component
+      - name: pip-audit — producer
+        run: |
+          echo "## Scanning apps/producer/requirements.txt" >> $GITHUB_STEP_SUMMARY
+          pip-audit -r apps/producer/requirements.txt --format=markdown >> $GITHUB_STEP_SUMMARY 2>&1 || true
+
+      - name: pip-audit — spark
+        run: |
+          echo "## Scanning apps/spark/requirements.txt" >> $GITHUB_STEP_SUMMARY
+          pip-audit -r apps/spark/requirements.txt --format=markdown >> $GITHUB_STEP_SUMMARY 2>&1 || true
+
+      - name: pip-audit — monitoring
+        run: |
+          echo "## Scanning apps/monitoring/requirements.txt" >> $GITHUB_STEP_SUMMARY
+          pip-audit -r apps/monitoring/requirements.txt --format=markdown >> $GITHUB_STEP_SUMMARY 2>&1 || true
+
+      - name: Summarise pip-audit results
+        run: |
+          echo "### pip-audit scan complete" >> $GITHUB_STEP_SUMMARY
+          echo "Results are shown above per requirements.txt file." >> $GITHUB_STEP_SUMMARY
+          echo "Review the Security tab for Trivy CVE findings." >> $GITHUB_STEP_SUMMARY

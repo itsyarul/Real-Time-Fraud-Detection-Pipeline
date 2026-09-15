@@ -6,9 +6,18 @@ __pycache__/
 .vscode/
 .idea/
 
+# Real secrets — never commit
 .env
 
+# .env.ci is intentionally tracked (contains only placeholder values, no real secrets)
+# !.env.ci
+
 .pytest_cache/
+
+# Test & coverage output
+coverage.xml
+htmlcov/
+.coverage
 
 metastore_db/
 spark-warehouse/
@@ -22,4 +31,9 @@ kafka/data/
 
 storage/minio/
 
-*.logdata/creditcard.csv
+*.log
+
+# Large datasets & data artifacts
+data/*.csv
+data/creditcard.csv
+*.csv

@@ -124,6 +124,7 @@ services:
     <<: *common
 
     networks:
+      - backend
       - frontend
 
   minio:

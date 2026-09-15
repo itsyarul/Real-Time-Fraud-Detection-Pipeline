@@ -1,0 +1,86 @@
+# ============================================================
+# Workflow 1: CI -- Lint & Static Analysis
+#
+# Runs on every push and pull_request to main / develop.
+# Checks Python code style and validates YAML / Docker Compose.
+# ============================================================
+
+name: CI — Lint & Static Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------
+  # Job 1: Python linting
+  # --------------------------------------------------------
+  lint-python:
+    name: Python — flake8 / black / isort
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install linting tools
+        run: pip install flake8 black isort
+
+      # PEP-8 compliance (max line 120, ignore common false-positives)
+      - name: flake8 — PEP8 lint
+        run: |
+          flake8 apps/ airflow/dags/ \
+            --max-line-length=120 \
+            --extend-ignore=E203,W503,E501 \
+            --exclude=__pycache__,*.pyc
+
+      # Formatting check (does NOT modify files)
+      - name: black — format check
+        run: |
+          black --check --diff \
+            apps/ airflow/dags/ \
+            --line-length=120
+
+      # Import order check
+      - name: isort — import order check
+        run: |
+          isort --check-only --diff \
+            apps/ airflow/dags/ \
+            --profile=black \
+            --line-length=120
+
+  # --------------------------------------------------------
+  # Job 2: YAML + Docker Compose validation
+  # --------------------------------------------------------
+  lint-yaml:
+    name: YAML & Docker Compose validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: yamllint — Lint YAML files
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: {max: 200}}}" \
+            docker-compose.yml \
+            monitoring/
+
+      # Validate the Compose file parses correctly using the safe CI env
+      - name: docker compose config — syntax validation
+        run: docker compose --env-file .env.ci config --quiet

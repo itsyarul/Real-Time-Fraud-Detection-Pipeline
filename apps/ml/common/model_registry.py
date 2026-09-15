@@ -116,9 +116,10 @@ class ModelRegistry:
             "AWS_ACCESS_KEY_ID",
             "minio",
         )
-        aws_secret_key = os.getenv(
-            "AWS_SECRET_ACCESS_KEY",
-            "MinioAdmin2026",
+        aws_secret_key = (
+            os.getenv("AWS_SECRET_ACCESS_KEY")
+            or os.getenv("MINIO_ROOT_PASSWORD")
+            or "minioadmin"
         )
         aws_region = os.getenv(
             "AWS_REGION",
