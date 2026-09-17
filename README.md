@@ -11,24 +11,23 @@ This is a real-time fraud detection platform that ingests transactions through K
 
 ## Table of Contents
 1. [Project Overview](#1-project-overview)
-2. [Problem Statement](#2-problem-statement)
-3. [Architecture](#3-architecture)
-4. [Technology Stack](#4-technology-stack)
-5. [Pipeline Flow](#5-pipeline-flow)
-6. [Repository Structure](#6-repository-structure)
-7. [Prerequisites](#7-prerequisites)
-8. [Configuration](#8-configuration)
-9. [Installation](#9-installation)
-10. [How to Run](#10-how-to-run)
-11. [How to Verify](#11-how-to-verify)
-12. [ML Lifecycle & CT/CD](#12-ml-lifecycle--ctcd)
-13. [Monitoring & Observability](#13-monitoring--observability)
-14. [CI/CD Automation](#14-cicd-automation)
-15. [Data Quality & Quarantine](#15-data-quality--quarantine)
-16. [Idempotency Guarantees](#16-idempotency-guarantees)
-17. [Troubleshooting](#17-troubleshooting)
-18. [Project Results & Benchmarks](#18-project-results--benchmarks)
-19. [Future Improvements](#19-future-improvements)
+2. [Architecture](#2-architecture)
+3. [Technology Stack](#3-technology-stack)
+4. [Pipeline Flow](#4-pipeline-flow)
+5. [Repository Structure](#5-repository-structure)
+6. [Prerequisites](#6-prerequisites)
+7. [Configuration](#7-configuration)
+8. [Installation](#8-installation)
+9. [How to Run](#9-how-to-run)
+10. [How to Verify](#10-how-to-verify)
+11. [ML Lifecycle & CT/CD](#11-ml-lifecycle--ctcd)
+12. [Monitoring & Observability](#12-monitoring--observability)
+13. [CI/CD Automation](#13-cicd-automation)
+14. [Data Quality & Quarantine](#14-data-quality--quarantine)
+15. [Idempotency Guarantees](#15-idempotency-guarantees)
+16. [Troubleshooting](#16-troubleshooting)
+17. [Project Results & Benchmarks](#17-project-results--benchmarks)
+18. [Future Improvements](#18-future-improvements)
 
 ---
 
@@ -46,17 +45,7 @@ This platform provides an **enterprise-grade, production-ready, real-time data e
 
 ---
 
-## 2. Problem Statement
-
-Detecting credit card fraud poses severe technical challenges:
-1. **Extreme Class Imbalance**: In real-world data (e.g., the Kaggle benchmark), only **492 out of 284,807 transactions (0.172%)** are fraudulent. A naive model predicting "not fraud" on every record achieves 99.83% accuracy while catching zero fraudulent transactions. Evaluation requires precision, recall, F1, and PR-AUC optimization rather than accuracy.
-2. **Sub-Second Latency Requirements**: Fraud detection must occur inline before or immediately after payment authorization.
-3. **Data Quality & Poison Pills**: Streaming pipelines are susceptible to schema drift, negative amounts, and null IDs that can silently break downstream ML models.
-4. **Idempotency Under Failure**: Distributed stream engines can crash or restart; without deduplication and atomic operations, transaction metrics and alerts become corrupted.
-
----
-
-## 3. Architecture
+## 2. Architecture
 
 The platform architecture follows a decoupled, resilient, containerized topology:
 
@@ -106,7 +95,7 @@ Model Registry (MinIO)           ▼                           ▼
 
 ---
 
-## 4. Technology Stack
+## 3. Technology Stack
 
 | Technology | Version | Role in Platform | Why Selected |
 |---|---|---|---|
@@ -126,7 +115,7 @@ Model Registry (MinIO)           ▼                           ▼
 
 ---
 
-## 5. Pipeline Flow
+## 4. Pipeline Flow
 
 ![Kafka and Spark Processing](docs/KafkaSpark%20processing.png)
 
@@ -145,7 +134,7 @@ Model Registry (MinIO)           ▼                           ▼
 
 ---
 
-## 6. Repository Structure
+## 5. Repository Structure
 
 ```
 .
@@ -202,7 +191,7 @@ Model Registry (MinIO)           ▼                           ▼
 
 ---
 
-## 7. Prerequisites
+## 6. Prerequisites
 
 Before installing the platform, ensure your environment meets these requirements:
 
@@ -215,7 +204,7 @@ Before installing the platform, ensure your environment meets these requirements
 
 ---
 
-## 8. Configuration
+## 7. Configuration
 
 The platform is configured through `.env`. A complete, sanitized template is provided in `.env.example`.
 
@@ -236,7 +225,7 @@ The platform is configured through `.env`. A complete, sanitized template is pro
 
 ---
 
-## 9. Installation
+## 8. Installation
 
 ### Step 1: Clone the Repository
 ```bash
@@ -260,7 +249,7 @@ docker compose build
 
 ---
 
-## 10. How to Run
+## 9. How to Run
 
 Follow this sequence to spin up the entire end-to-end platform:
 
@@ -314,7 +303,7 @@ docker compose run --rm spark-submit \
 
 ---
 
-## 11. How to Verify
+## 10. How to Verify
 
 ### Web Interfaces & Dashboards
 
@@ -360,7 +349,7 @@ docker compose run --rm spark-submit \
 
 ---
 
-## 12. ML Lifecycle & CT/CD
+## 11. ML Lifecycle & CT/CD
 
 ![Airflow DAG](docs/Airflow%20DAG.png)
 
@@ -400,7 +389,7 @@ At threshold **`0.99`**, the model achieves **85.7% Recall** while maintaining *
 
 ---
 
-## 13. Monitoring & Observability
+## 12. Monitoring & Observability
 
 ![Grafana Dashboard](docs/Grafana%20dashboard.png)
 
@@ -414,7 +403,7 @@ The monitoring architecture delivers real-time operational transparency:
 
 ---
 
-## 14. CI/CD Automation
+## 13. CI/CD Automation
 
 This repository maintains a strict architectural separation between **Software CI/CD** (GitHub Actions) and **Data/ML CT/CD** (Apache Airflow):
 
@@ -440,7 +429,7 @@ GitHub Actions                  Apache Airflow
 
 ---
 
-## 15. Data Quality & Quarantine
+## 14. Data Quality & Quarantine
 
 Data contracts are enforced at two critical checkpoints:
 
@@ -456,7 +445,7 @@ Data contracts are enforced at two critical checkpoints:
 
 ---
 
-## 16. Idempotency Guarantees
+## 15. Idempotency Guarantees
 
 In distributed stream processing, network failures or worker crashes can trigger batch replaying. Without idempotency, transactions would be duplicated:
 
@@ -480,7 +469,7 @@ Transaction A ──► Ingested ──► Spark Crashes ──► Batch Replaye
 
 ---
 
-## 17. Troubleshooting
+## 16. Troubleshooting
 
 | Symptom | Probable Cause | Diagnostic Command & Fix |
 |---|---|---|
@@ -494,7 +483,7 @@ Transaction A ──► Ingested ──► Spark Crashes ──► Batch Replaye
 
 ---
 
-## 18. Project Results & Benchmarks
+## 17. Project Results & Benchmarks
 
 The platform was benchmarked using the Kaggle Credit Card Fraud dataset:
 - **End-to-End Latency**: Sub-second (**~250ms – 450ms**) from Kafka ingestion to Delta write and inference scoring.
@@ -508,7 +497,7 @@ The platform was benchmarked using the Kaggle Credit Card Fraud dataset:
 
 ---
 
-## 19. Future Improvements
+## 18. Future Improvements
 
 - [ ] **Feature Store Integration**: Integrate [Feast](https://feast.dev/) for low-latency online feature retrieval (e.g., rolling 10-minute transaction counts).
 - [ ] **Graph Neural Networks (GNN)**: Incorporate graph-based fraud ring detection using Neo4j or Amazon Neptune.
@@ -521,4 +510,4 @@ The platform was benchmarked using the Kaggle Credit Card Fraud dataset:
 
 - **Author**: Yarul ([@itsyarul](https://github.com/itsyarul))
 - **Project**: Real-Time Fraud Detection Pipeline
-- **License**: Licensed under the [Apache License 2.0](LICENSE).
+- **License**: Licensed under the [Apache License 2.0](LICENSE).
